@@ -5,6 +5,8 @@
 //  Created by windbylocus on 2026/5/18.
 //
 
+import AppKit
+import Combine
 import SwiftUI
 import Charts
 
@@ -42,8 +44,6 @@ private enum AppLanguage: String, CaseIterable, Identifiable {
         case (.english, .calendarLedger): return "Calendar"
         case (.chinese, .transactions): return "交易明细"
         case (.english, .transactions): return "Transactions"
-        case (.chinese, .budgets): return "预算"
-        case (.english, .budgets): return "Budgets"
         case (.chinese, .reports): return "报表"
         case (.english, .reports): return "Reports"
         case (.chinese, .categoryManagement): return "分类管理"
@@ -56,18 +56,10 @@ private enum AppLanguage: String, CaseIterable, Identifiable {
         case (.english, .languageSubtitle): return "Choose the app interface language."
         case (.chinese, .month): return "月"
         case (.english, .month): return "Month"
-        case (.chinese, .week): return "周"
-        case (.english, .week): return "Week"
-        case (.chinese, .view): return "视图"
-        case (.english, .view): return "View"
         case (.chinese, .previousMonth): return "上个月"
         case (.english, .previousMonth): return "Previous month"
         case (.chinese, .nextMonth): return "下个月"
         case (.english, .nextMonth): return "Next month"
-        case (.chinese, .previousWeek): return "上一周"
-        case (.english, .previousWeek): return "Previous week"
-        case (.chinese, .nextWeek): return "下一周"
-        case (.english, .nextWeek): return "Next week"
         case (.chinese, .today): return "今天"
         case (.english, .today): return "Today"
         case (.chinese, .backToToday): return "回到今天"
@@ -86,8 +78,6 @@ private enum AppLanguage: String, CaseIterable, Identifiable {
         case (.english, .income): return "Income"
         case (.chinese, .expense): return "支出"
         case (.english, .expense): return "Expense"
-        case (.chinese, .budgetRemaining): return "预算剩余"
-        case (.english, .budgetRemaining): return "Budget left"
         case (.chinese, .selectedDayExpense): return "当天支出"
         case (.english, .selectedDayExpense): return "Day expense"
         case (.chinese, .entriesUnit): return "笔"
@@ -124,28 +114,40 @@ private enum AppLanguage: String, CaseIterable, Identifiable {
         case (.english, .searchCategoryOrNote): return "Search category or note"
         case (.chinese, .emptyTransactions): return "暂无交易记录"
         case (.english, .emptyTransactions): return "No transactions yet"
-        case (.chinese, .budgetSubtitle): return "设置总预算和各分类预算，实时跟踪支出进度。"
-        case (.english, .budgetSubtitle): return "Set total and category budgets, then track spending progress."
-        case (.chinese, .monthlyBudget): return "月度总预算"
-        case (.english, .monthlyBudget): return "Monthly budget"
+        case (.chinese, .budgetSubtitle): return "管理多个互不重叠的预算周期。"
+        case (.english, .budgetSubtitle): return "Manage multiple non-overlapping budget periods."
+        case (.chinese, .monthlyBudget): return "周期总预算"
+        case (.english, .monthlyBudget): return "Period budget"
         case (.chinese, .used): return "已用"
         case (.english, .used): return "Used"
         case (.chinese, .remaining): return "剩余"
         case (.english, .remaining): return "Remaining"
-        case (.chinese, .monthlyBudgetAmount): return "月预算金额"
-        case (.english, .monthlyBudgetAmount): return "Monthly budget amount"
-        case (.chinese, .categoryBudget): return "分类预算"
-        case (.english, .categoryBudget): return "Category budgets"
-        case (.chinese, .addCategory): return "添加分类"
-        case (.english, .addCategory): return "Add category"
-        case (.chinese, .emptyCategoryBudget): return "暂无分类预算，点右上角添加。"
-        case (.english, .emptyCategoryBudget): return "No category budgets yet. Add one from the top right."
-        case (.chinese, .adjustBudget): return "调整预算"
-        case (.english, .adjustBudget): return "Edit budget"
-        case (.chinese, .remove): return "移除"
-        case (.english, .remove): return "Remove"
-        case (.chinese, .adjustCategoryBudget): return "调整分类预算"
-        case (.english, .adjustCategoryBudget): return "Edit category budget"
+        case (.chinese, .startDate): return "开始日期"
+        case (.english, .startDate): return "Start date"
+        case (.chinese, .endDate): return "结束日期"
+        case (.english, .endDate): return "End date"
+        case (.chinese, .totalBudgetDays): return "周期天数"
+        case (.english, .totalBudgetDays): return "Total days"
+        case (.chinese, .elapsedDays): return "已过天数"
+        case (.english, .elapsedDays): return "Elapsed days"
+        case (.chinese, .remainingDays): return "剩余天数"
+        case (.english, .remainingDays): return "Days left"
+        case (.chinese, .averageDailyBudget): return "平均每日预算"
+        case (.english, .averageDailyBudget): return "Average daily budget"
+        case (.chinese, .dailyBudgetSuggestion): return "剩余每日建议"
+        case (.english, .dailyBudgetSuggestion): return "Daily suggestion"
+        case (.chinese, .budgetPlanList): return "预算周期"
+        case (.english, .budgetPlanList): return "Budget periods"
+        case (.chinese, .manageBudgets): return "管理预算"
+        case (.english, .manageBudgets): return "Manage budgets"
+        case (.chinese, .addBudgetPlan): return "添加预算"
+        case (.english, .addBudgetPlan): return "Add budget"
+        case (.chinese, .editBudgetPlan): return "编辑预算"
+        case (.english, .editBudgetPlan): return "Edit budget"
+        case (.chinese, .emptyBudgetPlans): return "暂无当前预算，添加一个日期周期开始跟踪。"
+        case (.english, .emptyBudgetPlans): return "No current budget. Add a date period to start tracking."
+        case (.chinese, .budgetOverlapError): return "预算日期不能与已有预算重叠。"
+        case (.english, .budgetOverlapError): return "Budget dates cannot overlap existing periods."
         case (.chinese, .budgetAmount): return "预算金额"
         case (.english, .budgetAmount): return "Budget amount"
         case (.chinese, .cancel): return "取消"
@@ -190,16 +192,6 @@ private enum AppLanguage: String, CaseIterable, Identifiable {
         case (.english, .entryCount): return "entries"
         case (.chinese, .deleteCategory): return "删除分类"
         case (.english, .deleteCategory): return "Delete category"
-        case (.chinese, .deleteMonthData): return "删除月数据"
-        case (.english, .deleteMonthData): return "Delete month data"
-        case (.chinese, .deleteWeekData): return "删除周数据"
-        case (.english, .deleteWeekData): return "Delete week data"
-        case (.chinese, .confirmDeleteMonthTitle): return "删除本月数据？"
-        case (.english, .confirmDeleteMonthTitle): return "Delete this month's data?"
-        case (.chinese, .confirmDeleteWeekTitle): return "删除本周数据？"
-        case (.english, .confirmDeleteWeekTitle): return "Delete this week's data?"
-        case (.chinese, .confirmDeletePeriodMessage): return "此操作会删除当前范围内的全部账单记录，且无法撤销。"
-        case (.english, .confirmDeletePeriodMessage): return "This will delete every entry in the current range and cannot be undone."
         case (.chinese, .deleteAllData): return "删除全部数据"
         case (.english, .deleteAllData): return "Delete all data"
         case (.chinese, .dataManagement): return "数据管理"
@@ -220,23 +212,24 @@ private enum AppLanguage: String, CaseIterable, Identifiable {
 
 private enum AppText {
     case ledgerSection, analysisSection, settingsSection
-    case calendarLedger, transactions, budgets, reports, categoryManagement, settings
+    case calendarLedger, transactions, reports, categoryManagement, settings
     case language, languageSubtitle
-    case month, week, view, previousMonth, nextMonth, previousWeek, nextWeek, today, backToToday
+    case month, previousMonth, nextMonth, today, backToToday
     case emptyMonth, records, activeDays, days, monthlyExpense
-    case income, expense, budgetRemaining, selectedDayExpense, entriesUnit
+    case income, expense, selectedDayExpense, entriesUnit
     case quickEntry, type, category, amountPlaceholder, note, save, dayDetails
     case emptyDay, emptyDayHint, invalidAmount, noRecords
     case transactionsSubtitle, newTransaction, filter, searchCategoryOrNote, emptyTransactions
-    case budgetSubtitle, monthlyBudget, used, remaining, monthlyBudgetAmount
-    case categoryBudget, addCategory, emptyCategoryBudget, adjustBudget, remove
-    case adjustCategoryBudget, budgetAmount, cancel
+    case budgetSubtitle, monthlyBudget, used, remaining
+    case startDate, endDate, totalBudgetDays, elapsedDays, remainingDays
+    case averageDailyBudget, dailyBudgetSuggestion
+    case budgetPlanList, manageBudgets, addBudgetPlan, editBudgetPlan, emptyBudgetPlans, budgetOverlapError
+    case budgetAmount, cancel
     case reportsSubtitle, period, threeMonths, sixMonths, twelveMonths
     case monthlyIncomeExpense, monthAxis, amount, noData, thisMonthExpenseByCategory, noExpenseThisMonth
     case edit, delete, editEntry, categoryManagementSubtitle, emptyCategories, newCategoryName
     case add, entryCount, deleteCategory
-    case deleteMonthData, deleteWeekData, confirmDeleteMonthTitle, confirmDeleteWeekTitle
-    case confirmDeletePeriodMessage, deleteAllData, dataManagement, deleteAllDataHint
+    case deleteAllData, dataManagement, deleteAllDataHint
     case confirmDeleteAllTitle, confirmDeleteAllMessage
     case noCategoriesHint, noCategoriesAvailable
 }
@@ -268,6 +261,7 @@ private extension TransactionKind {
 
 struct ContentView: View {
     @StateObject private var store = LedgerStore()
+    @StateObject private var windowActivity = WindowActivityObserver()
     @State private var selection: SidebarSection? = .calendar
     @AppStorage("appLanguage") private var appLanguageRaw = AppLanguage.chinese.rawValue
 
@@ -306,11 +300,51 @@ struct ContentView: View {
         }
         .environmentObject(store)
         .environment(\.appLanguage, language)
+        .environment(\.isWindowActive, windowActivity.isActive)
         .navigationSplitViewStyle(.balanced)
     }
 }
 
+@MainActor
+private final class WindowActivityObserver: ObservableObject {
+    @Published var isActive = NSApp.isActive
+
+    private var observers: [NSObjectProtocol] = []
+
+    init(center: NotificationCenter = .default) {
+        observers = [
+            center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.isActive = true
+                }
+            },
+            center.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.isActive = false
+                }
+            }
+        ]
+    }
+
+    deinit {
+        let center = NotificationCenter.default
+        observers.forEach { center.removeObserver($0) }
+    }
+}
+
+private struct WindowActiveKey: EnvironmentKey {
+    static let defaultValue = true
+}
+
+private extension EnvironmentValues {
+    var isWindowActive: Bool {
+        get { self[WindowActiveKey.self] }
+        set { self[WindowActiveKey.self] = newValue }
+    }
+}
+
 private struct DetailHost: View {
+    @Environment(\.isWindowActive) private var isWindowActive
     let selection: SidebarSection
 
     var body: some View {
@@ -320,8 +354,6 @@ private struct DetailHost: View {
                 CalendarLedgerPage()
             case .transactions:
                 TransactionsPage()
-            case .budgets:
-                BudgetsPage()
             case .reports:
                 ReportsPage()
             case .categories:
@@ -331,20 +363,19 @@ private struct DetailHost: View {
             }
         }
         .transition(.opacity.combined(with: .scale(scale: 0.98)))
-        .animation(.easeOut(duration: 0.2), value: selection)
+        .animation(isWindowActive ? .easeOut(duration: 0.2) : nil, value: selection)
     }
 }
 
 private enum SidebarSection: String, CaseIterable, Identifiable {
     case calendar
     case transactions
-    case budgets
     case reports
     case categories
     case preferences
 
     static let primary: [SidebarSection] = [.calendar, .transactions]
-    static let secondary: [SidebarSection] = [.budgets, .reports]
+    static let secondary: [SidebarSection] = [.reports]
     static let settings: [SidebarSection] = [.categories, .preferences]
 
     var id: String { rawValue }
@@ -353,7 +384,6 @@ private enum SidebarSection: String, CaseIterable, Identifiable {
         switch self {
         case .calendar: return language.text(.calendarLedger)
         case .transactions: return language.text(.transactions)
-        case .budgets: return language.text(.budgets)
         case .reports: return language.text(.reports)
         case .categories: return language.text(.categoryManagement)
         case .preferences: return language.text(.settings)
@@ -364,22 +394,9 @@ private enum SidebarSection: String, CaseIterable, Identifiable {
         switch self {
         case .calendar: return "calendar"
         case .transactions: return "list.bullet.rectangle"
-        case .budgets: return "chart.pie"
         case .reports: return "chart.bar"
         case .categories: return "tag"
         case .preferences: return "gearshape"
-        }
-    }
-}
-
-private enum CalendarViewMode: String, CaseIterable {
-    case month
-    case week
-
-    func title(_ language: AppLanguage) -> String {
-        switch self {
-        case .month: return language.text(.month)
-        case .week: return language.text(.week)
         }
     }
 }
@@ -417,21 +434,32 @@ private enum ShadowLevel {
 }
 
 private struct HoverLift: ViewModifier {
+    @Environment(\.isWindowActive) private var isWindowActive
     @State private var isHovering = false
 
     func body(content: Content) -> some View {
         content
-            .scaleEffect(isHovering ? 1.02 : 1.0)
-            .offset(y: isHovering ? -2 : 0)
-            .animation(.easeOut(duration: 0.2), value: isHovering)
-            .onHover { isHovering = $0 }
+            .scaleEffect(isWindowActive && isHovering ? 1.02 : 1.0)
+            .offset(y: isWindowActive && isHovering ? -2 : 0)
+            .animation(isWindowActive ? .easeOut(duration: 0.2) : nil, value: isHovering)
+            .onHover { isHovering = isWindowActive && $0 }
+            .onChange(of: isWindowActive) { _, active in
+                if !active {
+                    isHovering = false
+                }
+            }
     }
 }
 
 private struct AnimatedProgressBar: View {
+    @Environment(\.isWindowActive) private var isWindowActive
     let ratio: Double
     let tint: Color
     @State private var animatedRatio: Double = 0
+
+    private var displayedRatio: Double {
+        isWindowActive ? animatedRatio : ratio
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -440,18 +468,33 @@ private struct AnimatedProgressBar: View {
                     .fill(tint.opacity(0.15))
                 RoundedRectangle(cornerRadius: 4)
                     .fill(tint)
-                    .frame(width: geometry.size.width * animatedRatio)
+                    .frame(width: geometry.size.width * displayedRatio)
             }
         }
         .frame(height: 6)
         .onAppear {
+            guard isWindowActive else {
+                animatedRatio = ratio
+                return
+            }
+
             withAnimation(.easeOut(duration: 0.8)) {
                 animatedRatio = ratio
             }
         }
         .onChange(of: ratio) { _, newValue in
+            guard isWindowActive else {
+                animatedRatio = newValue
+                return
+            }
+
             withAnimation(.easeOut(duration: 0.5)) {
                 animatedRatio = newValue
+            }
+        }
+        .onChange(of: isWindowActive) { _, active in
+            if !active {
+                animatedRatio = ratio
             }
         }
     }
@@ -462,29 +505,27 @@ private struct AnimatedProgressBar: View {
 private struct CalendarLedgerPage: View {
     @EnvironmentObject private var store: LedgerStore
     @Environment(\.appLanguage) private var language
+    @Environment(\.isWindowActive) private var isWindowActive
     @State private var displayedMonth = Date().startOfMonth
     @State private var selectedDate = Date().startOfDay
     @State private var selectedKind: TransactionKind = .expense
     @State private var selectedCategory = "餐饮"
     @State private var amountText = ""
     @State private var noteText = ""
-    @State private var viewMode: CalendarViewMode = .month
     @State private var contentWidth: CGFloat = 1200
     @State private var pageDirection = 1
     @State private var pageToken = 0
     @State private var snapshot = CalendarLedgerSnapshot.empty
-    @State private var showingDeletePeriodAlert = false
+    @State private var showingBudgetManager = false
 
     private let calendar = Calendar.current
 
-    private var weekStart: Date {
-        weekStart(for: selectedDate)
-    }
+    private var selectedBudgetMetrics: BudgetMetrics? {
+        if let selectedPlan = store.budgetPlan(containing: selectedDate) {
+            return store.budgetMetrics(for: selectedPlan, referenceDate: selectedDate)
+        }
 
-    private func weekStart(for date: Date) -> Date {
-        let weekday = calendar.component(.weekday, from: date)
-        let mondayOffset = (weekday + 5) % 7
-        return calendar.date(byAdding: .day, value: -mondayOffset, to: date)?.startOfDay ?? date.startOfDay
+        return store.currentBudgetMetrics()
     }
 
     var body: some View {
@@ -492,14 +533,11 @@ private struct CalendarLedgerPage: View {
             VStack(alignment: .leading, spacing: 12) {
                 CalendarHeader(
                     displayedMonth: displayedMonth,
-                    viewMode: $viewMode,
                     entryCount: snapshot.monthEntryCount,
                     activeDays: snapshot.activeDays,
                     monthExpense: snapshot.monthExpense,
-                    weekRange: weekRangeLabel,
                     onPrevious: { movePeriod(by: -1) },
                     onNext: { movePeriod(by: 1) },
-                    onDeletePeriod: { showingDeletePeriodAlert = true },
                     onToday: {
                         let nextMonth = Date().startOfMonth
                         let nextDate = Date().startOfDay
@@ -507,7 +545,7 @@ private struct CalendarLedgerPage: View {
                             return
                         }
                         pageDirection = calendar.compare(nextDate, to: selectedDate, toGranularity: .day) == .orderedAscending ? -1 : 1
-                        withAnimation(.easeInOut(duration: 0.24)) {
+                        updateCalendarState(animated: isWindowActive) {
                             displayedMonth = nextMonth
                             selectedDate = nextDate
                             refreshSnapshot(displayedMonth: nextMonth, selectedDate: nextDate)
@@ -516,15 +554,10 @@ private struct CalendarLedgerPage: View {
                     }
                 )
 
-                CalendarSummaryStrip(
-                    income: snapshot.monthIncome,
-                    incomeCount: snapshot.incomeCount,
-                    expense: snapshot.monthExpense,
-                    expenseCount: snapshot.expenseCount,
-                    budget: store.monthlyBudget,
-                    selectedExpense: snapshot.selectedExpense,
-                    selectedDate: selectedDate,
-                    activeDays: snapshot.activeDays
+                BudgetStatusCard(
+                    metrics: selectedBudgetMetrics,
+                    planCount: store.budgetPlans.count,
+                    onManage: { showingBudgetManager = true }
                 )
 
                 calendarContent(snapshot: snapshot, isWide: contentWidth >= 940)
@@ -547,32 +580,20 @@ private struct CalendarLedgerPage: View {
         .onReceive(store.$entries) { _ in
             refreshSnapshot(displayedMonth: displayedMonth, selectedDate: selectedDate)
         }
+        .onReceive(store.$budgetPlans) { _ in
+            refreshSnapshot(displayedMonth: displayedMonth, selectedDate: selectedDate)
+        }
         .onChange(of: selectedKind) { _, newValue in
             if !store.categories(for: newValue).contains(selectedCategory) {
                 selectedCategory = store.defaultCategory(for: newValue)
             }
         }
-        .alert(deletePeriodAlertTitle, isPresented: $showingDeletePeriodAlert) {
-            Button(language.text(.delete), role: .destructive) {
-                deleteCurrentPeriodEntries()
-            }
-            Button(language.text(.cancel), role: .cancel) {}
-        } message: {
-            Text(language.text(.confirmDeletePeriodMessage))
+        .sheet(isPresented: $showingBudgetManager) {
+            BudgetManagerSheet()
+                .environmentObject(store)
+                .environment(\.appLanguage, language)
+                .frame(minWidth: 520, minHeight: 460)
         }
-    }
-
-    private var weekRangeLabel: String {
-        let endDate = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? selectedDate
-        let formatter = DateFormatter()
-        formatter.locale = language.locale
-        formatter.dateFormat = language == .chinese ? "M月d日" : "MMM d"
-        let separator = language == .chinese ? "-" : " - "
-        return "\(formatter.string(from: weekStart))\(separator)\(formatter.string(from: endDate))"
-    }
-
-    private var deletePeriodAlertTitle: String {
-        viewMode == .month ? language.text(.confirmDeleteMonthTitle) : language.text(.confirmDeleteWeekTitle)
     }
 
     @ViewBuilder
@@ -594,26 +615,17 @@ private struct CalendarLedgerPage: View {
 
     @ViewBuilder
     private func calendarBoard(snapshot: CalendarLedgerSnapshot) -> some View {
-        ZStack {
-            if viewMode == .month {
-                CalendarBoard(days: snapshot.monthDays) { day in
-                    select(day)
-                }
-            } else {
-                WeekBoard(days: snapshot.weekDays) { day in
-                    select(day)
-                }
-            }
+        CalendarBoard(days: snapshot.monthDays) { day in
+            select(day)
         }
-        .id("\(viewMode.rawValue)-\(pageToken)")
+        .id(pageToken)
         .clipped()
-        .compositingGroup()
-        .transition(.asymmetric(
+        .conditionalCompositingGroup(isWindowActive)
+        .transition(isWindowActive ? .asymmetric(
             insertion: .move(edge: pageDirection >= 0 ? .trailing : .leading).combined(with: .opacity),
             removal: .move(edge: pageDirection >= 0 ? .leading : .trailing).combined(with: .opacity)
-        ))
-        .animation(.easeInOut(duration: 0.24), value: pageToken)
-        .animation(.easeInOut(duration: 0.18), value: viewMode)
+        ) : .identity)
+        .animation(isWindowActive ? .easeInOut(duration: 0.24) : nil, value: pageToken)
     }
 
     private func dayPanel(snapshot: CalendarLedgerSnapshot) -> some View {
@@ -646,7 +658,7 @@ private struct CalendarLedgerPage: View {
 
         if shouldMovePage {
             pageDirection = nextMonth > displayedMonth ? 1 : -1
-            withAnimation(.easeInOut(duration: 0.24)) {
+            updateCalendarState(animated: isWindowActive) {
                 selectedDate = day.date
                 displayedMonth = nextMonth
                 refreshSnapshot(displayedMonth: nextMonth, selectedDate: day.date)
@@ -660,22 +672,12 @@ private struct CalendarLedgerPage: View {
 
     private func movePeriod(by value: Int) {
         pageDirection = value
-        let nextDisplayedMonth: Date
-        let nextSelectedDate: Date
+        let target = calendar.date(byAdding: .month, value: value, to: displayedMonth) ?? displayedMonth
+        let selectedDay = min(calendar.component(.day, from: selectedDate), calendar.range(of: .day, in: .month, for: target)?.count ?? 1)
+        let nextDisplayedMonth = target.startOfMonth
+        let nextSelectedDate = calendar.date(bySetting: .day, value: selectedDay, of: target)?.startOfDay ?? target.startOfDay
 
-        switch viewMode {
-        case .month:
-            let target = calendar.date(byAdding: .month, value: value, to: displayedMonth) ?? displayedMonth
-            let selectedDay = min(calendar.component(.day, from: selectedDate), calendar.range(of: .day, in: .month, for: target)?.count ?? 1)
-            nextDisplayedMonth = target.startOfMonth
-            nextSelectedDate = calendar.date(bySetting: .day, value: selectedDay, of: target)?.startOfDay ?? target.startOfDay
-        case .week:
-            let target = calendar.date(byAdding: .weekOfYear, value: value, to: weekStart) ?? selectedDate
-            nextSelectedDate = target.startOfDay
-            nextDisplayedMonth = target.startOfMonth
-        }
-
-        withAnimation(.easeInOut(duration: 0.24)) {
+        updateCalendarState(animated: isWindowActive) {
             displayedMonth = nextDisplayedMonth
             selectedDate = nextSelectedDate
             refreshSnapshot(displayedMonth: nextDisplayedMonth, selectedDate: nextSelectedDate)
@@ -683,22 +685,11 @@ private struct CalendarLedgerPage: View {
         }
     }
 
-    private func deleteCurrentPeriodEntries() {
-        let startDate: Date
-        let endDate: Date
-
-        switch viewMode {
-        case .month:
-            startDate = displayedMonth.startOfMonth
-            endDate = calendar.date(byAdding: .month, value: 1, to: startDate) ?? startDate
-        case .week:
-            startDate = weekStart
-            endDate = calendar.date(byAdding: .day, value: 7, to: startDate) ?? startDate
-        }
-
-        withAnimation(.easeOut(duration: 0.2)) {
-            store.deleteEntries(from: startDate, to: endDate)
-            refreshSnapshot(displayedMonth: displayedMonth, selectedDate: selectedDate)
+    private func updateCalendarState(animated: Bool, _ updates: () -> Void) {
+        if animated {
+            withAnimation(.easeInOut(duration: 0.24), updates)
+        } else {
+            updates()
         }
     }
 
@@ -717,40 +708,22 @@ private struct CalendarLedgerPage: View {
             calendar.isDate($0.date, equalTo: displayedMonth, toGranularity: .month)
         }
 
-        let monthIncome = monthEntries
-            .lazy
-            .filter { $0.kind == .income }
-            .map(\.amount)
-            .reduce(0, +)
-
         let monthExpense = monthEntries
             .lazy
             .filter { $0.kind == .expense }
             .map(\.amount)
             .reduce(0, +)
 
-        let incomeCount = monthEntries.filter { $0.kind == .income }.count
-        let expenseCount = monthEntries.filter { $0.kind == .expense }.count
         let activeDays = Set(monthEntries.map { calendar.startOfDay(for: $0.date) }).count
         let selectedDay = selectedDate.startOfDay
         let selectedEntries = entriesByDay[selectedDay] ?? []
-        let selectedExpense = selectedEntries
-            .lazy
-            .filter { $0.kind == .expense }
-            .map(\.amount)
-            .reduce(0, +)
 
         return CalendarLedgerSnapshot(
             monthDays: makeMonthDays(entriesByDay: entriesByDay, displayedMonth: displayedMonth, selectedDate: selectedDate),
-            weekDays: makeWeekDays(entriesByDay: entriesByDay, selectedDate: selectedDate),
             selectedEntries: selectedEntries,
             monthEntryCount: monthEntries.count,
-            monthIncome: monthIncome,
             monthExpense: monthExpense,
-            incomeCount: incomeCount,
-            expenseCount: expenseCount,
-            activeDays: activeDays,
-            selectedExpense: selectedExpense
+            activeDays: activeDays
         )
     }
 
@@ -776,37 +749,16 @@ private struct CalendarLedgerPage: View {
         }
     }
 
-    private func makeWeekDays(entriesByDay: [Date: [LedgerEntry]], selectedDate: Date) -> [CalendarDay] {
-        let startDate = weekStart(for: selectedDate)
-
-        return (0..<7).compactMap { offset in
-            guard let date = calendar.date(byAdding: .day, value: offset, to: startDate) else {
-                return nil
-            }
-            let day = date.startOfDay
-
-            return CalendarDay(
-                date: day,
-                isCurrentMonth: true,
-                isSelected: calendar.isDate(day, inSameDayAs: selectedDate),
-                isToday: calendar.isDateInToday(day),
-                entries: entriesByDay[day] ?? []
-            )
-        }
-    }
 }
 
 private struct CalendarHeader: View {
     @Environment(\.appLanguage) private var language
     let displayedMonth: Date
-    @Binding var viewMode: CalendarViewMode
     let entryCount: Int
     let activeDays: Int
     let monthExpense: Double
-    let weekRange: String
     let onPrevious: () -> Void
     let onNext: () -> Void
-    let onDeletePeriod: () -> Void
     let onToday: () -> Void
 
     var body: some View {
@@ -828,59 +780,40 @@ private struct CalendarHeader: View {
 
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: 7) {
-            if viewMode == .month {
-                Text(displayedMonth.formatted(.dateTime.year().month(.wide).locale(language.locale)))
-                    .font(.system(size: 30, weight: .semibold, design: .rounded))
-                Text(entryCount == 0 ? language.text(.emptyMonth) : "\(entryCount) \(language.text(.records)) · \(language.text(.activeDays)) \(activeDays) \(language.text(.days)) · \(language.text(.monthlyExpense)) \(monthExpense.currencyText)")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text(weekRange)
-                    .font(.system(size: 28, weight: .semibold, design: .rounded))
-                Text(displayedMonth.formatted(.dateTime.year().month(.wide).locale(language.locale)))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
+            Text(displayedMonth.formatted(.dateTime.year().month(.wide).locale(language.locale)))
+                .font(.system(size: 30, weight: .semibold, design: .rounded))
+            Text(entryCount == 0 ? language.text(.emptyMonth) : "\(entryCount) \(language.text(.records)) · \(language.text(.activeDays)) \(activeDays) \(language.text(.days)) · \(language.text(.monthlyExpense)) \(monthExpense.currencyText)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         }
     }
 
     private var controls: some View {
         HStack(spacing: 8) {
-            Picker(language.text(.view), selection: $viewMode) {
-                ForEach(CalendarViewMode.allCases, id: \.self) { mode in
-                    Text(mode.title(language)).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 100)
-
             Button(action: onPrevious) {
                 Image(systemName: "chevron.left")
             }
             .buttonStyle(CalendarPageButtonStyle())
-            .help(viewMode == .month ? language.text(.previousMonth) : language.text(.previousWeek))
+            .help(language.text(.previousMonth))
 
             Button(action: onNext) {
                 Image(systemName: "chevron.right")
             }
             .buttonStyle(CalendarPageButtonStyle())
-            .help(viewMode == .month ? language.text(.nextMonth) : language.text(.nextWeek))
+            .help(language.text(.nextMonth))
 
             Button(action: onToday) {
                 Label(language.text(.today), systemImage: "dot.scope")
             }
             .help(language.text(.backToToday))
-
-            Button(role: .destructive, action: onDeletePeriod) {
-                Label(viewMode == .month ? language.text(.deleteMonthData) : language.text(.deleteWeekData), systemImage: "trash")
-            }
-            .help(viewMode == .month ? language.text(.deleteMonthData) : language.text(.deleteWeekData))
         }
         .controlSize(.regular)
     }
 }
 
 private struct CalendarPageButtonStyle: ButtonStyle {
+    @Environment(\.isWindowActive) private var isWindowActive
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.body.weight(.semibold))
@@ -894,100 +827,362 @@ private struct CalendarPageButtonStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: 9, style: .continuous)
                     .strokeBorder(configuration.isPressed ? Color.accentColor.opacity(0.2) : .secondary.opacity(0.18), lineWidth: 1)
             )
-            .scaleEffect(configuration.isPressed ? 0.88 : 1)
-            .animation(.spring(response: 0.18, dampingFraction: 0.68), value: configuration.isPressed)
+            .scaleEffect(isWindowActive && configuration.isPressed ? 0.88 : 1)
+            .animation(isWindowActive ? .spring(response: 0.18, dampingFraction: 0.68) : nil, value: configuration.isPressed)
     }
 }
 
-private struct CalendarSummaryStrip: View {
+private struct BudgetStatusCard: View {
     @Environment(\.appLanguage) private var language
-    let income: Double
-    let incomeCount: Int
-    let expense: Double
-    let expenseCount: Int
-    let budget: Double
-    let selectedExpense: Double
-    let selectedDate: Date
-    let activeDays: Int
-
-    private var remainingBudget: Double {
-        budget - expense
-    }
+    let metrics: BudgetMetrics?
+    let planCount: Int
+    let onManage: () -> Void
 
     var body: some View {
         GlassPanel(cornerRadius: 20, shadowLevel: .card) {
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 0) {
-                    summaryItems
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(language.text(.monthlyBudget))
+                            .font(.headline)
+                        Text(subtitle)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Button(action: onManage) {
+                        Label(language.text(.manageBudgets), systemImage: "slider.horizontal.3")
+                    }
+                    .buttonStyle(.bordered)
                 }
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 8)], spacing: 8) {
-                    summaryItemViews
+                if let metrics {
+                    AnimatedProgressBar(
+                        ratio: metrics.progress,
+                        tint: metrics.remaining < 0 ? .red : .blue
+                    )
+
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 10) {
+                            budgetMetricTile(title: language.text(.used), value: metrics.spent.compactCurrencyText, note: "\(Int(metrics.progress * 100))%", symbol: "arrow.up.right", tint: .orange)
+                            budgetMetricTile(title: language.text(.remaining), value: metrics.remaining.compactCurrencyText, note: "\(language.text(.remainingDays)) \(metrics.remainingDays) \(language.text(.days))", symbol: "gauge.with.needle", tint: metrics.remaining < 0 ? .red : .blue)
+                            budgetMetricTile(title: language.text(.dailyBudgetSuggestion), value: metrics.suggestedDailyBudget.compactCurrencyText, note: language.text(.averageDailyBudget), symbol: "sparkline", tint: .green)
+                            budgetMetricTile(title: language.text(.totalBudgetDays), value: "\(metrics.dayCount)", note: "\(language.text(.elapsedDays)) \(metrics.elapsedDays)", symbol: "calendar", tint: .purple)
+                        }
+
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 10)], spacing: 10) {
+                            budgetMetricTile(title: language.text(.used), value: metrics.spent.compactCurrencyText, note: "\(Int(metrics.progress * 100))%", symbol: "arrow.up.right", tint: .orange)
+                            budgetMetricTile(title: language.text(.remaining), value: metrics.remaining.compactCurrencyText, note: "\(language.text(.remainingDays)) \(metrics.remainingDays) \(language.text(.days))", symbol: "gauge.with.needle", tint: metrics.remaining < 0 ? .red : .blue)
+                            budgetMetricTile(title: language.text(.dailyBudgetSuggestion), value: metrics.suggestedDailyBudget.compactCurrencyText, note: language.text(.averageDailyBudget), symbol: "sparkline", tint: .green)
+                            budgetMetricTile(title: language.text(.totalBudgetDays), value: "\(metrics.dayCount)", note: "\(language.text(.elapsedDays)) \(metrics.elapsedDays)", symbol: "calendar", tint: .purple)
+                        }
+                    }
+                } else {
+                    Text(language.text(.emptyBudgetPlans))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 4)
                 }
             }
         }
     }
 
-    @ViewBuilder
-    private var summaryItems: some View {
-        CalendarSummaryItem(title: language.text(.income), value: income.compactCurrencyText, note: "\(incomeCount) \(language.text(.entriesUnit))", symbol: "arrow.down.left", tint: .green)
-        summaryDivider
-        CalendarSummaryItem(title: language.text(.expense), value: expense.compactCurrencyText, note: "\(expenseCount) \(language.text(.entriesUnit))", symbol: "arrow.up.right", tint: .orange)
-        summaryDivider
-        CalendarSummaryItem(title: language.text(.budgetRemaining), value: remainingBudget.compactCurrencyText, note: "\(language.text(.activeDays)) \(activeDays) \(language.text(.days))", symbol: "gauge.with.needle", tint: remainingBudget < 0 ? .red : .blue)
-        summaryDivider
-        CalendarSummaryItem(title: selectedDate.formatted(.dateTime.month().day().locale(language.locale)), value: selectedExpense.compactCurrencyText, note: language.text(.selectedDayExpense), symbol: "calendar", tint: .purple)
+    private var subtitle: String {
+        guard let metrics else {
+            return "\(language.text(.budgetPlanList)) \(planCount)"
+        }
+
+        let range = "\(dateText(metrics.plan.startDate)) - \(dateText(metrics.plan.endDate))"
+        return "\(range) · \(language.text(.remaining)) \(metrics.remaining.currencyText)"
     }
 
-    @ViewBuilder
-    private var summaryItemViews: some View {
-        CalendarSummaryItem(title: language.text(.income), value: income.compactCurrencyText, note: "\(incomeCount) \(language.text(.entriesUnit))", symbol: "arrow.down.left", tint: .green)
-        CalendarSummaryItem(title: language.text(.expense), value: expense.compactCurrencyText, note: "\(expenseCount) \(language.text(.entriesUnit))", symbol: "arrow.up.right", tint: .orange)
-        CalendarSummaryItem(title: language.text(.budgetRemaining), value: remainingBudget.compactCurrencyText, note: "\(language.text(.activeDays)) \(activeDays) \(language.text(.days))", symbol: "gauge.with.needle", tint: remainingBudget < 0 ? .red : .blue)
-        CalendarSummaryItem(title: selectedDate.formatted(.dateTime.month().day().locale(language.locale)), value: selectedExpense.compactCurrencyText, note: language.text(.selectedDayExpense), symbol: "calendar", tint: .purple)
-    }
-
-    private var summaryDivider: some View {
-        Rectangle()
-            .fill(.secondary.opacity(0.14))
-            .frame(width: 1, height: 42)
-            .padding(.horizontal, 10)
-    }
-}
-
-private struct CalendarSummaryItem: View {
-    let title: String
-    let value: String
-    let note: String
-    let symbol: String
-    let tint: Color
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: symbol)
-                .font(.caption.weight(.bold))
-                .foregroundStyle(tint)
-                .frame(width: 28, height: 28)
-                .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-
-            VStack(alignment: .leading, spacing: 3) {
+    private func budgetMetricTile(title: String, value: String, note: String, symbol: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(spacing: 6) {
+                Image(systemName: symbol)
+                    .foregroundStyle(tint)
                 Text(title)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                Text(value)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                Text(note)
-                    .font(.caption2)
+            }
+
+            Text(value)
+                .font(.headline.weight(.semibold))
+                .lineLimit(1)
+            Text(note)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
+        .padding(10)
+        .background(tint.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private func dateText(_ date: Date) -> String {
+        date.formatted(.dateTime.month().day().locale(language.locale))
+    }
+}
+
+private struct BudgetManagerSheet: View {
+    @EnvironmentObject private var store: LedgerStore
+    @Environment(\.appLanguage) private var language
+    @Environment(\.dismiss) private var dismiss
+    @State private var editingDraft: BudgetPlanDraft?
+    @State private var validationMessage: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(language.text(.manageBudgets))
+                        .font(.title3.weight(.semibold))
+                    Text(language.text(.budgetSubtitle))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Button(language.text(.addBudgetPlan)) {
+                    editingDraft = BudgetPlanDraft.nextAvailable(after: store.budgetPlans)
+                    validationMessage = nil
+                }
+                .buttonStyle(.borderedProminent)
+            }
+
+            if let validationMessage {
+                Text(validationMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+
+            if store.budgetPlans.isEmpty {
+                Text(language.text(.emptyBudgetPlans))
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, minHeight: 120, alignment: .center)
+            } else {
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(store.budgetPlans) { plan in
+                            BudgetPlanRow(
+                                plan: plan,
+                                metrics: store.budgetMetrics(for: plan),
+                                onEdit: {
+                                    editingDraft = BudgetPlanDraft(plan: plan)
+                                    validationMessage = nil
+                                },
+                                onDelete: {
+                                    store.deleteBudgetPlan(id: plan.id)
+                                }
+                            )
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
             }
 
             Spacer(minLength: 0)
+
+            HStack {
+                Spacer()
+                Button(language.text(.cancel)) {
+                    dismiss()
+                }
+                .keyboardShortcut(.cancelAction)
+            }
         }
-        .frame(maxWidth: .infinity, minHeight: 50, alignment: .leading)
+        .padding(22)
+        .sheet(item: $editingDraft) { draft in
+            BudgetPlanEditorSheet(
+                draft: draft,
+                onCancel: {
+                    editingDraft = nil
+                },
+                onSave: { savedDraft in
+                    save(savedDraft)
+                }
+            )
+            .environmentObject(store)
+            .environment(\.appLanguage, language)
+            .frame(width: 360)
+        }
+    }
+
+    private func save(_ draft: BudgetPlanDraft) {
+        let result: BudgetValidationError?
+        if let id = draft.planID {
+            result = store.updateBudgetPlan(id: id, amount: draft.amount, startDate: draft.startDate, endDate: draft.endDate)
+        } else {
+            result = store.addBudgetPlan(amount: draft.amount, startDate: draft.startDate, endDate: draft.endDate)
+        }
+
+        if let result {
+            validationMessage = validationText(for: result)
+        } else {
+            validationMessage = nil
+            editingDraft = nil
+        }
+    }
+
+    private func validationText(for error: BudgetValidationError) -> String {
+        switch error {
+        case .notFound:
+            return error.localizedDescription
+        case .overlapsExisting:
+            return language.text(.budgetOverlapError)
+        }
+    }
+}
+
+private struct BudgetPlanRow: View {
+    @Environment(\.appLanguage) private var language
+    let plan: BudgetPlan
+    let metrics: BudgetMetrics
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(dateText(plan.startDate)) - \(dateText(plan.endDate))")
+                        .font(.headline)
+                    Text("\(language.text(.used)) \(metrics.spent.compactCurrencyText) / \(plan.amount.compactCurrencyText)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Text("\(Int(metrics.progress * 100))%")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(metrics.remaining < 0 ? .red : .blue)
+
+                Button(action: onEdit) {
+                    Image(systemName: "pencil")
+                }
+                .buttonStyle(.borderless)
+                .help(language.text(.editBudgetPlan))
+
+                Button(role: .destructive, action: onDelete) {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.borderless)
+                .help(language.text(.delete))
+            }
+
+            AnimatedProgressBar(
+                ratio: metrics.progress,
+                tint: metrics.remaining < 0 ? .red : .blue
+            )
+
+            Text("\(language.text(.remaining)) \(metrics.remaining.compactCurrencyText) · \(language.text(.dailyBudgetSuggestion)) \(metrics.suggestedDailyBudget.compactCurrencyText)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .background(.secondary.opacity(0.07), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private func dateText(_ date: Date) -> String {
+        date.formatted(.dateTime.year().month().day().locale(language.locale))
+    }
+}
+
+private struct BudgetPlanEditorSheet: View {
+    @Environment(\.appLanguage) private var language
+    @State private var draft: BudgetPlanDraft
+    let onCancel: () -> Void
+    let onSave: (BudgetPlanDraft) -> Void
+
+    init(draft: BudgetPlanDraft, onCancel: @escaping () -> Void, onSave: @escaping (BudgetPlanDraft) -> Void) {
+        _draft = State(initialValue: draft)
+        self.onCancel = onCancel
+        self.onSave = onSave
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(draft.planID == nil ? language.text(.addBudgetPlan) : language.text(.editBudgetPlan))
+                .font(.title3.weight(.semibold))
+
+            TextField(
+                language.text(.budgetAmount),
+                value: $draft.amount,
+                format: .number.precision(.fractionLength(0...2))
+            )
+            .textFieldStyle(.roundedBorder)
+
+            DatePicker(language.text(.startDate), selection: $draft.startDate, displayedComponents: .date)
+            DatePicker(language.text(.endDate), selection: $draft.endDate, displayedComponents: .date)
+
+            Text("\(language.text(.totalBudgetDays)) \(BudgetPlan(amount: draft.amount, startDate: draft.startDate, endDate: draft.endDate).dayCount) \(language.text(.days))")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            HStack {
+                Button(language.text(.cancel), action: onCancel)
+                    .keyboardShortcut(.cancelAction)
+
+                Spacer()
+
+                Button(language.text(.save)) {
+                    onSave(draft)
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(22)
+    }
+}
+
+private struct BudgetPlanDraft: Identifiable {
+    let id = UUID()
+    var planID: UUID?
+    var amount: Double
+    var startDate: Date
+    var endDate: Date
+
+    init(planID: UUID? = nil, amount: Double, startDate: Date, endDate: Date) {
+        self.planID = planID
+        self.amount = amount
+        self.startDate = startDate
+        self.endDate = endDate
+    }
+
+    init(plan: BudgetPlan) {
+        planID = plan.id
+        amount = plan.amount
+        startDate = plan.startDate
+        endDate = plan.endDate
+    }
+
+    static func new(referenceDate: Date = Date(), calendar: Calendar = .current) -> BudgetPlanDraft {
+        let start = calendar.startOfDay(for: referenceDate)
+        let end = calendar.date(byAdding: .day, value: 6, to: start) ?? start
+        return BudgetPlanDraft(amount: 0, startDate: start, endDate: end)
+    }
+
+    static func nextAvailable(after plans: [BudgetPlan], referenceDate: Date = Date(), calendar: Calendar = .current) -> BudgetPlanDraft {
+        var start = calendar.startOfDay(for: referenceDate)
+        let sortedPlans = plans.sorted { $0.startDate < $1.startDate }
+
+        for plan in sortedPlans where plan.endDate >= start {
+            let end = calendar.date(byAdding: .day, value: 6, to: start) ?? start
+            let draftPlan = BudgetPlan(amount: 0, startDate: start, endDate: end, calendar: calendar)
+            if !draftPlan.overlaps(plan) {
+                continue
+            }
+            start = calendar.date(byAdding: .day, value: 1, to: plan.endDate) ?? start
+        }
+
+        return new(referenceDate: start, calendar: calendar)
     }
 }
 
@@ -1028,155 +1223,8 @@ private struct CalendarBoard: View {
     }
 }
 
-private struct WeekBoard: View {
-    @Environment(\.appLanguage) private var language
-    let days: [CalendarDay]
-    let onSelect: (CalendarDay) -> Void
-
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 7)
-
-    private var weekdayTitles: [String] {
-        language == .chinese ? ["周一", "周二", "周三", "周四", "周五", "周六", "周日"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    }
-
-    var body: some View {
-        CalendarPanel(cornerRadius: 24) {
-            VStack(spacing: 10) {
-                LazyVGrid(columns: columns, spacing: 8) {
-                    ForEach(Array(zip(weekdayTitles, days)), id: \.1.id) { title, day in
-                        VStack(spacing: 4) {
-                            Text(title)
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                            Text(day.date.formatted(.dateTime.day().locale(language.locale)))
-                                .font(.title2.weight(.medium))
-                                .foregroundStyle(day.isToday ? .blue : .primary)
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 52)
-                        .background(day.isToday ? .green.opacity(0.10) : .secondary.opacity(0.05), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    }
-                }
-
-                LazyVGrid(columns: columns, spacing: 8) {
-                    ForEach(days) { day in
-                        WeekDayCell(day: day)
-                            .onTapGesture {
-                                onSelect(day)
-                            }
-                    }
-                }
-            }
-        }
-    }
-}
-
-private struct WeekDayCell: View {
-    @Environment(\.appLanguage) private var language
-    let day: CalendarDay
-    @State private var isHovering = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack {
-                if day.isToday {
-                    Text(language.text(.today))
-                        .font(.caption.weight(.bold))
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
-                        .background(.green.opacity(0.16), in: Capsule())
-                        .foregroundStyle(.green)
-                }
-                Spacer()
-                if !day.entries.isEmpty {
-                    Text("\(day.entries.count) \(language.text(.entriesUnit))")
-                        .font(.caption2.weight(.semibold))
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
-                        .background(.blue.opacity(day.isSelected ? 0.18 : 0.10), in: Capsule())
-                        .foregroundStyle(day.isSelected ? .blue : .secondary)
-                }
-            }
-
-            Spacer(minLength: 0)
-
-            if day.expense > 0 {
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.up.right")
-                        .font(.caption2)
-                        .foregroundStyle(.orange)
-                    Text(day.expense.compactCurrencyText)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.orange)
-                    Spacer()
-                }
-            }
-
-            if day.income > 0 {
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.down.left")
-                        .font(.caption2)
-                        .foregroundStyle(.green)
-                    Text("+\(day.income.compactCurrencyText)")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.green)
-                    Spacer()
-                }
-            }
-
-            if day.expense == 0 && day.income == 0 {
-                Text(language.text(.noRecords))
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-
-            if let primaryCategory = day.primaryCategory {
-                Text(primaryCategory)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-
-            Spacer(minLength: 0)
-        }
-        .padding(10)
-        .frame(maxWidth: .infinity, minHeight: 122, alignment: .topLeading)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(cellBackground)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(cellBorder, lineWidth: day.isSelected ? 2 : 1)
-        )
-        .scaleEffect(isHovering ? 1.015 : 1)
-        .offset(y: isHovering ? -1 : 0)
-        .animation(.easeOut(duration: 0.16), value: isHovering)
-        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .onHover { isHovering = $0 }
-    }
-
-    private var cellBackground: AnyShapeStyle {
-        if day.isSelected {
-            return AnyShapeStyle(.blue.opacity(0.16))
-        }
-        if day.isToday {
-            return AnyShapeStyle(.green.opacity(0.08))
-        }
-        return AnyShapeStyle(.white.opacity(isHovering ? 0.72 : 0.54))
-    }
-
-    private var cellBorder: Color {
-        if day.isSelected {
-            return .blue.opacity(0.62)
-        }
-        if day.isToday {
-            return .green.opacity(0.36)
-        }
-        return .secondary.opacity(isHovering ? 0.24 : 0.12)
-    }
-}
-
 private struct CalendarDayCell: View {
+    @Environment(\.isWindowActive) private var isWindowActive
     @Environment(\.appLanguage) private var language
     let day: CalendarDay
     @State private var isHovering = false
@@ -1263,12 +1311,17 @@ private struct CalendarDayCell: View {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(cellBorder, lineWidth: day.isSelected ? 2 : 1)
         )
-        .scaleEffect(isHovering ? 1.018 : 1)
-        .offset(y: isHovering ? -1 : 0)
+        .scaleEffect(isWindowActive && isHovering ? 1.018 : 1)
+        .offset(y: isWindowActive && isHovering ? -1 : 0)
         .opacity(day.isCurrentMonth ? 1 : 0.42)
-        .animation(.easeOut(duration: 0.16), value: isHovering)
+        .animation(isWindowActive ? .easeOut(duration: 0.16) : nil, value: isHovering)
         .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .onHover { isHovering = $0 }
+        .onHover { isHovering = isWindowActive && $0 }
+        .onChange(of: isWindowActive) { _, active in
+            if !active {
+                isHovering = false
+            }
+        }
     }
 
     @ViewBuilder
@@ -1317,6 +1370,7 @@ private struct CalendarDayCell: View {
 
 private struct DayLedgerPanel: View {
     @Environment(\.appLanguage) private var language
+    @Environment(\.isWindowActive) private var isWindowActive
     let date: Date
     let entries: [LedgerEntry]
     @Binding var selectedKind: TransactionKind
@@ -1365,7 +1419,7 @@ private struct DayLedgerPanel: View {
                             RoundedRectangle(cornerRadius: 18, style: .continuous)
                                 .strokeBorder(.secondary.opacity(0.12), lineWidth: 1)
                         )
-                        .animation(.easeOut(duration: 0.18), value: date)
+                        .animation(isWindowActive ? .easeOut(duration: 0.18) : nil, value: date)
 
                         VStack(alignment: .leading, spacing: 6) {
                             Text(date.formatted(.dateTime.weekday(.wide).locale(language.locale)))
@@ -1435,7 +1489,7 @@ private struct DayLedgerPanel: View {
                             return
                         }
 
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        updateDayPanelState {
                             let error = onSave(selectedKind, selectedCategory, amount, noteText)
                             if let error {
                                 feedbackMessage = error
@@ -1485,7 +1539,7 @@ private struct DayLedgerPanel: View {
                             LedgerEntryRow(entry: entry, onEdit: {
                                 editingEntry = entry
                             }, onDelete: {
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                updateDayPanelState {
                                     onDelete(entry.id)
                                 }
                             })
@@ -1502,7 +1556,7 @@ private struct DayLedgerPanel: View {
                 }
             }
         }
-        .animation(.spring(response: 0.28, dampingFraction: 0.82), value: entries.count)
+        .animation(isWindowActive ? .spring(response: 0.28, dampingFraction: 0.82) : nil, value: entries.count)
         .sheet(item: $editingEntry) { entry in
             EntryEditorSheet(
                 entry: entry,
@@ -1530,11 +1584,20 @@ private struct DayLedgerPanel: View {
         }
         return source
     }
+
+    private func updateDayPanelState(_ updates: () -> Void) {
+        if isWindowActive {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8), updates)
+        } else {
+            updates()
+        }
+    }
 }
 
 private struct TransactionsPage: View {
     @EnvironmentObject private var store: LedgerStore
     @Environment(\.appLanguage) private var language
+    @Environment(\.isWindowActive) private var isWindowActive
     @State private var searchText = ""
 
     private var filteredEntries: [LedgerEntry] {
@@ -1571,7 +1634,7 @@ private struct TransactionsPage: View {
                     } else {
                         ForEach(filteredEntries) { entry in
                             LedgerEntryRow(entry: entry, onDelete: {
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                updateTransactionState {
                                     store.deleteEntry(id: entry.id)
                                 }
                             })
@@ -1590,204 +1653,14 @@ private struct TransactionsPage: View {
             }
         }
     }
-}
 
-private struct BudgetsPage: View {
-    @EnvironmentObject private var store: LedgerStore
-    @Environment(\.appLanguage) private var language
-    @State private var editingCategory: String?
-    @State private var editingAmount = ""
-    @State private var selectedBudgetCategory = ""
-    @State private var budgetAmountText = ""
-
-    private var month: Date { Date().startOfMonth }
-
-    private var monthExpense: Double {
-        store.totalExpense(in: Date())
-    }
-
-    private var budgetRatio: Double {
-        min(monthExpense / max(store.monthlyBudget, 1), 1)
-    }
-
-    private var availableCategories: [String] {
-        store.expenseCategories.filter { store.categoryBudgets[$0] == nil }
-    }
-
-    var body: some View {
-        PageSurface {
-            PageHeader(
-                title: language.text(.budgets),
-                subtitle: language.text(.budgetSubtitle),
-                primaryActionTitle: "",
-                primaryActionSymbol: "",
-                secondaryActionTitle: "",
-                secondaryActionSymbol: ""
-            )
-
-            GlassPanel(cornerRadius: 22) {
-                VStack(alignment: .leading, spacing: 14) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(language.text(.monthlyBudget))
-                                .font(.headline)
-                            Text("\(language.text(.used)) \(monthExpense.currencyText)，\(language.text(.remaining)) \((store.monthlyBudget - monthExpense).currencyText)")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        Spacer()
-
-                        Text("\(Int(budgetRatio * 100))%")
-                            .font(.title2.weight(.semibold))
-                            .foregroundStyle(monthExpense > store.monthlyBudget ? .red : .blue)
-                    }
-
-                    AnimatedProgressBar(
-                        ratio: budgetRatio,
-                        tint: monthExpense > store.monthlyBudget ? .red : .blue
-                    )
-
-                    TextField(
-                        language.text(.monthlyBudgetAmount),
-                        value: Binding(
-                            get: { store.monthlyBudget },
-                            set: { store.updateMonthlyBudget($0) }
-                        ),
-                        format: .number.precision(.fractionLength(0...2))
-                    )
-                    .textFieldStyle(.roundedBorder)
-                }
-            }
-
-            GlassPanel(cornerRadius: 22) {
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack {
-                        Text(language.text(.categoryBudget))
-                            .font(.headline)
-
-                        Spacer()
-
-                        if !availableCategories.isEmpty {
-                            Menu {
-                                ForEach(availableCategories, id: \.self) { cat in
-                                    Button(cat) {
-                                        selectedBudgetCategory = cat
-                                        budgetAmountText = ""
-                                    }
-                                }
-                            } label: {
-                                Label(language.text(.addCategory), systemImage: "plus")
-                                    .font(.subheadline)
-                            }
-                            .menuStyle(.borderlessButton)
-                            .fixedSize()
-                        }
-                    }
-                    .padding(.bottom, 14)
-
-                    if store.categoryBudgets.isEmpty {
-                        Text(language.text(.emptyCategoryBudget))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, minHeight: 60, alignment: .center)
-                            .transition(.opacity)
-                    } else {
-                        ForEach(Array(store.categoryBudgets.keys.sorted()), id: \.self) { category in
-                            let budget = store.categoryBudgets[category] ?? 0
-                            let spent = store.categorySpending(category: category, in: month)
-                            let ratio = min(spent / max(budget, 1), 1)
-
-                            VStack(spacing: 8) {
-                                HStack {
-                                    Text(category)
-                                        .font(.body.weight(.medium))
-
-                                    Spacer()
-
-                                    Text("\(spent.compactCurrencyText) / \(budget.compactCurrencyText)")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-
-                                    Button {
-                                        editingCategory = category
-                                        editingAmount = budget.editingAmountText
-                                    } label: {
-                                        Image(systemName: "pencil")
-                                    }
-                                    .buttonStyle(.borderless)
-                                    .help(language.text(.adjustBudget))
-
-                                    Button(role: .destructive) {
-                                        store.setCategoryBudget(category: category, amount: 0)
-                                    } label: {
-                                        Image(systemName: "xmark.circle")
-                                    }
-                                    .buttonStyle(.borderless)
-                                    .help(language.text(.remove))
-                                }
-
-                                AnimatedProgressBar(
-                                    ratio: ratio,
-                                    tint: spent > budget ? .red : .green
-                                )
-                            }
-                            .padding(.vertical, 8)
-
-                            if category != store.categoryBudgets.keys.sorted().last {
-                                Divider()
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        .sheet(item: Binding(
-            get: { editingCategory.map { BudgetEditTarget(category: $0) } },
-            set: { editingCategory = $0?.category }
-        )) { target in
-            VStack(alignment: .leading, spacing: 16) {
-                Text("\(language.text(.adjustCategoryBudget)): \(target.category)")
-                    .font(.title3.weight(.semibold))
-
-                TextField(language.text(.budgetAmount), text: $editingAmount)
-                    .textFieldStyle(.roundedBorder)
-                    .onAppear {
-                        editingAmount = (store.categoryBudgets[target.category] ?? 0).editingAmountText
-                    }
-
-                HStack {
-                    Button(language.text(.cancel)) {
-                        editingCategory = nil
-                    }
-                    .keyboardShortcut(.cancelAction)
-
-                    Spacer()
-
-                    Button(language.text(.save)) {
-                        if let amount = Double(editingAmount.replacingOccurrences(of: ",", with: "").trimmingCharacters(in: .whitespacesAndNewlines)) {
-                            store.setCategoryBudget(category: target.category, amount: amount)
-                        }
-                        editingCategory = nil
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.defaultAction)
-                }
-            }
-            .padding(22)
-            .frame(width: 340)
-        }
-        .onChange(of: selectedBudgetCategory) { _, category in
-            guard !category.isEmpty else { return }
-            store.setCategoryBudget(category: category, amount: 1000)
-            selectedBudgetCategory = ""
+    private func updateTransactionState(_ updates: () -> Void) {
+        if isWindowActive {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8), updates)
+        } else {
+            updates()
         }
     }
-}
-
-private struct BudgetEditTarget: Identifiable {
-    let category: String
-    var id: String { category }
 }
 
 private struct ReportsPage: View {
@@ -1902,6 +1775,7 @@ private struct CategoryPieDatum: Identifiable {
 
 private struct MonthBarChart: View {
     @Environment(\.appLanguage) private var language
+    @Environment(\.isWindowActive) private var isWindowActive
     let data: [MonthBarDatum]
     @State private var chartOpacity: Double = 0
 
@@ -1952,6 +1826,11 @@ private struct MonthBarChart: View {
                     .frame(height: 240)
                     .opacity(chartOpacity)
                     .onAppear {
+                        guard isWindowActive else {
+                            chartOpacity = 1
+                            return
+                        }
+
                         withAnimation(.easeOut(duration: 0.6)) {
                             chartOpacity = 1
                         }
@@ -1971,6 +1850,7 @@ private struct MonthBarChart: View {
 
 private struct CategoryPieChart: View {
     @Environment(\.appLanguage) private var language
+    @Environment(\.isWindowActive) private var isWindowActive
     let data: [CategoryPieDatum]
     @State private var chartOpacity: Double = 0
 
@@ -1998,6 +1878,11 @@ private struct CategoryPieChart: View {
                     .frame(height: 260)
                     .opacity(chartOpacity)
                     .onAppear {
+                        guard isWindowActive else {
+                            chartOpacity = 1
+                            return
+                        }
+
                         withAnimation(.easeOut(duration: 0.6)) {
                             chartOpacity = 1
                         }
@@ -2460,6 +2345,7 @@ private struct SettingsPage: View {
 }
 
 private struct GlassPanel<Content: View>: View {
+    @Environment(\.isWindowActive) private var isWindowActive
     let cornerRadius: CGFloat
     let shadowLevel: ShadowLevel
     @ViewBuilder var content: () -> Content
@@ -2473,14 +2359,34 @@ private struct GlassPanel<Content: View>: View {
     var body: some View {
         content()
             .padding(16)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .background(panelBackground, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(.white.opacity(0.28), lineWidth: 1)
+                    .strokeBorder(isWindowActive ? .white.opacity(0.28) : .secondary.opacity(0.14), lineWidth: 1)
             )
-            .shadow(color: .black.opacity(shadowLevel.opacity * 0.5), radius: 0.5, y: 0)
-            .shadow(color: .black.opacity(shadowLevel.opacity * 0.7), radius: shadowLevel.radius * 0.5, y: shadowLevel.yOffset * 0.5)
-            .shadow(color: .black.opacity(shadowLevel.opacity), radius: shadowLevel.radius, y: shadowLevel.yOffset)
+            .shadow(color: .black.opacity(activeShadowOpacity * 0.5), radius: 0.5, y: 0)
+            .shadow(color: .black.opacity(activeShadowOpacity * 0.7), radius: activeShadowRadius * 0.5, y: activeShadowOffset * 0.5)
+            .shadow(color: .black.opacity(activeShadowOpacity), radius: activeShadowRadius, y: activeShadowOffset)
+    }
+
+    private var panelBackground: AnyShapeStyle {
+        if isWindowActive {
+            return AnyShapeStyle(.ultraThinMaterial)
+        }
+
+        return AnyShapeStyle(Color(nsColor: .controlBackgroundColor).opacity(0.96))
+    }
+
+    private var activeShadowOpacity: Double {
+        isWindowActive ? shadowLevel.opacity : 0.025
+    }
+
+    private var activeShadowRadius: CGFloat {
+        isWindowActive ? shadowLevel.radius : 4
+    }
+
+    private var activeShadowOffset: CGFloat {
+        isWindowActive ? shadowLevel.yOffset : 1
     }
 }
 
@@ -2501,20 +2407,35 @@ private struct CalendarPanel<Content: View>: View {
 }
 
 private struct AppBackground: View {
+    @Environment(\.isWindowActive) private var isWindowActive
+
     var body: some View {
         ZStack {
             Color(nsColor: .windowBackgroundColor)
 
-            LinearGradient(
-                colors: [
-                    Color(nsColor: .controlAccentColor).opacity(0.08),
-                    Color(nsColor: .windowBackgroundColor).opacity(0.0)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            if isWindowActive {
+                LinearGradient(
+                    colors: [
+                        Color(nsColor: .controlAccentColor).opacity(0.08),
+                        Color(nsColor: .windowBackgroundColor).opacity(0.0)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
         }
         .ignoresSafeArea()
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func conditionalCompositingGroup(_ enabled: Bool) -> some View {
+        if enabled {
+            compositingGroup()
+        } else {
+            self
+        }
     }
 }
 
@@ -2552,27 +2473,17 @@ private struct CalendarDay: Identifiable {
 
 private struct CalendarLedgerSnapshot {
     let monthDays: [CalendarDay]
-    let weekDays: [CalendarDay]
     let selectedEntries: [LedgerEntry]
     let monthEntryCount: Int
-    let monthIncome: Double
     let monthExpense: Double
-    let incomeCount: Int
-    let expenseCount: Int
     let activeDays: Int
-    let selectedExpense: Double
 
     static let empty = CalendarLedgerSnapshot(
         monthDays: [],
-        weekDays: [],
         selectedEntries: [],
         monthEntryCount: 0,
-        monthIncome: 0,
         monthExpense: 0,
-        incomeCount: 0,
-        expenseCount: 0,
-        activeDays: 0,
-        selectedExpense: 0
+        activeDays: 0
     )
 }
 
@@ -2592,6 +2503,12 @@ private extension Date {
     var startOfMonth: Date {
         let components = Calendar.current.dateComponents([.year, .month], from: self)
         return Calendar.current.date(from: components) ?? self
+    }
+
+    var endOfMonth: Date {
+        let calendar = Calendar.current
+        let nextMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth) ?? startOfMonth
+        return calendar.date(byAdding: .day, value: -1, to: nextMonth) ?? startOfMonth
     }
 }
 

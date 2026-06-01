@@ -12,10 +12,9 @@ import SwiftUI
 @MainActor
 final class LedgerStore: ObservableObject {
     @Published var entries: [LedgerEntry]
-    @Published var monthlyBudget: Double
+    @Published var budgetPlans: [BudgetPlan]
     @Published var expenseCategories: [String]
     @Published var incomeCategories: [String]
-    @Published var categoryBudgets: [String: Double]
 
     private let storageURL: URL
 
@@ -24,16 +23,14 @@ final class LedgerStore: ObservableObject {
 
         if let state = Self.loadState(from: storageURL) {
             entries = state.entries.sorted { $0.createdAt < $1.createdAt }
-            monthlyBudget = state.monthlyBudget
+            budgetPlans = Self.migrateBudgetPlans(from: state)
             expenseCategories = state.expenseCategories.isEmpty ? Self.defaultExpenseCategories : state.expenseCategories
             incomeCategories = state.incomeCategories.isEmpty ? Self.defaultIncomeCategories : state.incomeCategories
-            categoryBudgets = state.categoryBudgets
         } else {
             entries = []
-            monthlyBudget = 0
+            budgetPlans = [.defaultPlan()]
             expenseCategories = Self.defaultExpenseCategories
             incomeCategories = Self.defaultIncomeCategories
-            categoryBudgets = [:]
             save()
         }
     }
@@ -64,6 +61,28 @@ final class LedgerStore: ObservableObject {
             .filter { $0.kind == .income }
             .map(\.amount)
             .reduce(0, +)
+    }
+
+    func entries(from startDate: Date, to endDate: Date) -> [LedgerEntry] {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: startDate)
+        let end = calendar.startOfDay(for: endDate)
+        let endExclusive = calendar.date(byAdding: .day, value: 1, to: end) ?? end
+
+        return entries
+            .filter { $0.date >= start && $0.date < endExclusive }
+            .sorted { $0.date < $1.date || ($0.date == $1.date && $0.createdAt < $1.createdAt) }
+    }
+
+    func totalExpense(from startDate: Date, to endDate: Date) -> Double {
+        entries(from: startDate, to: endDate)
+            .filter { $0.kind == .expense }
+            .map(\.amount)
+            .reduce(0, +)
+    }
+
+    func activeDays(from startDate: Date, to endDate: Date) -> Int {
+        Set(entries(from: startDate, to: endDate).map { Calendar.current.startOfDay(for: $0.date) }).count
     }
 
     func expenseCount(in month: Date) -> Int {
@@ -130,9 +149,87 @@ final class LedgerStore: ObservableObject {
         save()
     }
 
-    func updateMonthlyBudget(_ value: Double) {
-        monthlyBudget = max(0, value)
+    func addBudgetPlan(amount: Double, startDate: Date, endDate: Date) -> BudgetValidationError? {
+        let plan = BudgetPlan(amount: amount, startDate: startDate, endDate: endDate)
+        if let error = validateBudgetPlan(plan) {
+            return error
+        }
+
+        budgetPlans.append(plan)
+        sortBudgetPlans()
         save()
+        return nil
+    }
+
+    func updateBudgetPlan(id: UUID, amount: Double, startDate: Date, endDate: Date) -> BudgetValidationError? {
+        guard let index = budgetPlans.firstIndex(where: { $0.id == id }) else {
+            return .notFound
+        }
+
+        let plan = BudgetPlan(id: id, amount: amount, startDate: startDate, endDate: endDate)
+        if let error = validateBudgetPlan(plan, ignoring: id) {
+            return error
+        }
+
+        budgetPlans[index] = plan
+        sortBudgetPlans()
+        save()
+        return nil
+    }
+
+    func deleteBudgetPlan(id: UUID) {
+        budgetPlans.removeAll { $0.id == id }
+        save()
+    }
+
+    func budgetPlan(containing date: Date) -> BudgetPlan? {
+        let day = Calendar.current.startOfDay(for: date)
+        return budgetPlans.first { $0.startDate <= day && $0.endDate >= day }
+    }
+
+    func budgetMetrics(for plan: BudgetPlan, referenceDate: Date = Date()) -> BudgetMetrics {
+        BudgetMetrics(
+            plan: plan,
+            spent: totalExpense(from: plan.startDate, to: plan.endDate),
+            activeDays: activeDays(from: plan.startDate, to: plan.endDate),
+            referenceDate: referenceDate
+        )
+    }
+
+    func currentBudgetMetrics(referenceDate: Date = Date()) -> BudgetMetrics? {
+        guard let plan = budgetPlan(containing: referenceDate) else {
+            return nil
+        }
+
+        return budgetMetrics(for: plan, referenceDate: referenceDate)
+    }
+
+    func totalBudgetAllocation(from startDate: Date, to endDate: Date) -> Double {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: startDate)
+        let end = calendar.startOfDay(for: endDate)
+
+        return budgetPlans.reduce(0) { total, plan in
+            let overlapStart = max(start, plan.startDate)
+            let overlapEnd = min(end, plan.endDate)
+
+            guard overlapStart <= overlapEnd, plan.dayCount > 0 else {
+                return total
+            }
+
+            let overlapDays = BudgetPlan.daysInclusive(from: overlapStart, to: overlapEnd, calendar: calendar)
+            return total + plan.averageDailyBudget * Double(overlapDays)
+        }
+    }
+
+    func validateBudgetPlan(_ plan: BudgetPlan, ignoring ignoredID: UUID? = nil) -> BudgetValidationError? {
+        if budgetPlans.contains(where: { existing in
+            existing.id != ignoredID && existing.overlaps(plan)
+        }) {
+            return .overlapsExisting
+        }
+
+        return nil
     }
 
     func addCategory(_ name: String, kind: TransactionKind) {
@@ -153,10 +250,8 @@ final class LedgerStore: ObservableObject {
         switch kind {
         case .expense:
             expenseCategories.removeAll { $0 == name }
-            categoryBudgets.removeValue(forKey: name)
         case .income:
             incomeCategories.removeAll { $0 == name }
-            categoryBudgets.removeValue(forKey: name)
         }
         for i in entries.indices where entries[i].category == name && entries[i].kind == kind {
             entries[i].category = "其他"
@@ -178,27 +273,7 @@ final class LedgerStore: ObservableObject {
         for i in entries.indices where entries[i].category == oldName && entries[i].kind == kind {
             entries[i].category = trimmed
         }
-        if let budget = categoryBudgets.removeValue(forKey: oldName) {
-            categoryBudgets[trimmed] = budget
-        }
         save()
-    }
-
-    func setCategoryBudget(category: String, amount: Double) {
-        let clamped = max(0, amount)
-        if clamped > 0 {
-            categoryBudgets[category] = clamped
-        } else {
-            categoryBudgets.removeValue(forKey: category)
-        }
-        save()
-    }
-
-    func categorySpending(category: String, in month: Date) -> Double {
-        entries(in: month)
-            .filter { $0.category == category && $0.kind == .expense }
-            .map(\.amount)
-            .reduce(0, +)
     }
 
     func categories(for kind: TransactionKind) -> [String] {
@@ -212,10 +287,11 @@ final class LedgerStore: ObservableObject {
     private func save() {
         let state = LedgerState(
             entries: entries,
-            monthlyBudget: monthlyBudget,
+            monthlyBudget: budgetPlans.first?.amount ?? 0,
+            budgetPlan: budgetPlans.first,
+            budgetPlans: budgetPlans,
             expenseCategories: expenseCategories,
-            incomeCategories: incomeCategories,
-            categoryBudgets: categoryBudgets
+            incomeCategories: incomeCategories
         )
 
         do {
@@ -250,6 +326,34 @@ final class LedgerStore: ObservableObject {
             .appendingPathComponent("ledger-state.json")
     }
 
+    private func sortBudgetPlans() {
+        budgetPlans.sort { $0.startDate < $1.startDate }
+    }
+
+    private static func migrateBudgetPlans(from state: LedgerState) -> [BudgetPlan] {
+        if let plans = state.budgetPlans, !plans.isEmpty {
+            return sanitizedBudgetPlans(plans)
+        }
+
+        if let plan = state.budgetPlan {
+            return [plan]
+        }
+
+        return [BudgetPlan.defaultPlan(amount: state.monthlyBudget ?? 0)]
+    }
+
+    private static func sanitizedBudgetPlans(_ plans: [BudgetPlan]) -> [BudgetPlan] {
+        plans
+            .sorted { $0.startDate < $1.startDate }
+            .reduce(into: [BudgetPlan]()) { result, plan in
+                guard !result.contains(where: { $0.overlaps(plan) }) else {
+                    return
+                }
+
+                result.append(plan)
+            }
+    }
+
     private static let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -277,10 +381,115 @@ final class LedgerStore: ObservableObject {
 
 struct LedgerState: Codable {
     var entries: [LedgerEntry]
-    var monthlyBudget: Double
+    var monthlyBudget: Double?
+    var budgetPlan: BudgetPlan?
+    var budgetPlans: [BudgetPlan]?
     var expenseCategories: [String]
     var incomeCategories: [String]
-    var categoryBudgets: [String: Double]
+    var categoryBudgets: [String: Double]?
+}
+
+struct BudgetPlan: Identifiable, Codable, Equatable {
+    var id: UUID
+    var amount: Double
+    var startDate: Date
+    var endDate: Date
+
+    init(id: UUID = UUID(), amount: Double, startDate: Date, endDate: Date, calendar: Calendar = .current) {
+        let start = calendar.startOfDay(for: startDate)
+        let requestedEnd = calendar.startOfDay(for: endDate)
+        let minimumEnd = calendar.date(byAdding: .day, value: 1, to: start) ?? start
+
+        self.id = id
+        self.amount = max(0, amount)
+        self.startDate = start
+        self.endDate = requestedEnd < minimumEnd ? minimumEnd : requestedEnd
+    }
+
+    var dayCount: Int {
+        BudgetPlan.daysInclusive(from: startDate, to: endDate)
+    }
+
+    var averageDailyBudget: Double {
+        dayCount > 0 ? amount / Double(dayCount) : 0
+    }
+
+    static func defaultPlan(amount: Double = 0, referenceDate: Date = Date(), calendar: Calendar = .current) -> BudgetPlan {
+        let components = calendar.dateComponents([.year, .month], from: referenceDate)
+        let start = calendar.date(from: components) ?? calendar.startOfDay(for: referenceDate)
+        let nextMonth = calendar.date(byAdding: .month, value: 1, to: start) ?? start
+        let end = calendar.date(byAdding: .day, value: -1, to: nextMonth) ?? start
+        return BudgetPlan(amount: amount, startDate: start, endDate: end, calendar: calendar)
+    }
+
+    static func daysInclusive(from startDate: Date, to endDate: Date, calendar: Calendar = .current) -> Int {
+        let start = calendar.startOfDay(for: startDate)
+        let end = calendar.startOfDay(for: endDate)
+        let days = calendar.dateComponents([.day], from: start, to: end).day ?? 0
+        return max(1, days + 1)
+    }
+
+    func overlaps(_ other: BudgetPlan) -> Bool {
+        startDate <= other.endDate && other.startDate <= endDate
+    }
+}
+
+enum BudgetValidationError: LocalizedError, Equatable {
+    case notFound
+    case overlapsExisting
+
+    var errorDescription: String? {
+        switch self {
+        case .notFound:
+            return "预算不存在。"
+        case .overlapsExisting:
+            return "预算日期不能与已有预算重叠。"
+        }
+    }
+}
+
+struct BudgetMetrics {
+    let plan: BudgetPlan
+    let spent: Double
+    let activeDays: Int
+    let dayCount: Int
+    let elapsedDays: Int
+    let remainingDays: Int
+    let remaining: Double
+    let averageDailyBudget: Double
+    let suggestedDailyBudget: Double
+    let progress: Double
+
+    init(plan: BudgetPlan, spent: Double, activeDays: Int, referenceDate: Date, calendar: Calendar = .current) {
+        let today = calendar.startOfDay(for: referenceDate)
+        let dayCount = plan.dayCount
+        let elapsedDays: Int
+        let remainingDays: Int
+
+        if today < plan.startDate {
+            elapsedDays = 0
+            remainingDays = dayCount
+        } else if today > plan.endDate {
+            elapsedDays = dayCount
+            remainingDays = 0
+        } else {
+            elapsedDays = BudgetPlan.daysInclusive(from: plan.startDate, to: today, calendar: calendar)
+            remainingDays = BudgetPlan.daysInclusive(from: today, to: plan.endDate, calendar: calendar)
+        }
+
+        let remaining = plan.amount - spent
+
+        self.plan = plan
+        self.spent = spent
+        self.activeDays = activeDays
+        self.dayCount = dayCount
+        self.elapsedDays = elapsedDays
+        self.remainingDays = remainingDays
+        self.remaining = remaining
+        self.averageDailyBudget = dayCount > 0 ? plan.amount / Double(dayCount) : 0
+        self.suggestedDailyBudget = remainingDays > 0 ? max(0, remaining) / Double(remainingDays) : 0
+        self.progress = plan.amount > 0 ? min(max(spent / plan.amount, 0), 1) : (spent > 0 ? 1 : 0)
+    }
 }
 
 struct LedgerEntry: Identifiable, Codable {
